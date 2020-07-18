@@ -531,6 +531,21 @@ class ForceContestMixin(object):
         return super(ForceContestMixin, self).get(request, *args, **kwargs)
 
 
+class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def get_title(self):
+        return "%s's submissions in %s" % (self.username, self.contest.name)
+
+    def access_check(self, request):
+        super(UserAllContestSubmissions, self).access_check(request)
+        if not self.contest.users.filter(user_id=self.profile.id).exists():
+            raise Http404()
+
+    def get_content_title(self):
+        return format_html(_('<a href="{1}">{0}</a>\'s submissions in <a href="{3}">{2}</a>'),
+                        self.username, reverse('user_page', args=[self.username]),
+                        self.contest.name, reverse('contest_view', args=[self.contest.key]))
+
+
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
